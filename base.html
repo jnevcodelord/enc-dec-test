@@ -4,10 +4,35 @@
     <title>My Web Page</title>
 </head>
 <body>
-    <input type="text" id="message" />
-    <button id="sendbutton">Send!</button>
+    
+    
+    
+
+
+    <input type = "text" id = "name" placeholder = "enter name"/>
+    <input type = "text" id = "password" placeholder = "enter password"/>
+
+    
+  <script>
+      function change(){
+          var name1 = document.getElementById("name").value;
+         if (name1 == "John"){
+             window.location.assign("/static/scripts/test.html")
+
+             
+         }
+
+         if (name1 == "Sona"){
+            window.location.assign("/static/scripts/test1.html")
+
+         }
+      }
+  </script>
+    
+    <button id="login" onclick = "change()">Login!</button>
 
     <!-- Include your external JavaScript file -->
-    <script src="/static/scripts/myscript.js"></script>
+    
+
 </body>
 </html>
