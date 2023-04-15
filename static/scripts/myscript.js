@@ -2,106 +2,87 @@
 
 let publicKey; // Declare a variable to store the publicKey
 let privateKey;
-
+let ciphertextArray;
 
 var button = document.getElementById("sendbutton")
+
 var message = document.getElementById("message");
 
-console.log(message.value)
+function str2ab(str) {
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
 
-button.addEventListener("click", function() {
+button.addEventListener("click", async function() { // Add 'async' keyword before function declaration
+  console.log(message.value)
+  fetch('/checkKey', {
+    method: 'GET',
+  }).then(response => response.json())
+  .then(data => {
+    key = data.key;
+    console.log(key);
+    // encrypt(message.value, pubKey);
 
-    console.log(message.value);
-    generateKeys()
-    .then(pubKey => {
-      // Pass the returned publicKey to the encrypt() function
-      encrypt(message.value, pubKey);
-    })
-    .catch(error => {
-      console.error("Error generating key pair:", error);
+    const binaryDerString = window.atob(key)
+    const binaryDer = str2ab(binaryDerString);
+    
+    return window.crypto.subtle.importKey(
+      "spki",
+      binaryDer,
+      {
+        name: "RSA-OAEP",
+        hash: "SHA-256",
+      },
+      true,
+      ["encrypt"]
+    ).then((importedKey) => {
+      // The resolved value of the Promise is the imported key
+      publicKey = importedKey;
+      console.log(typeof publicKey)
+      encrypt(message.value,publicKey)
+
+    }).catch((error) => {
+      // Handle any errors that may occur during the import process
+      console.error("Error importing key:", error);
     });
 
-    decryptMessage(privateKey, ciphertext)
-
-});
-
-function generateKeys() {
-  return new Promise((resolve, reject) => {
-    window.crypto.subtle
-      .generateKey(
-        {
-          name: "RSA-OAEP",
-          modulusLength: 2048,
-          publicExponent: new Uint8Array([1, 0, 1]),
-          hash: "SHA-256",
-        },
-        true,
-        ["encrypt", "decrypt"]
-      )
-      .then(myKeyPair => {
-        privateKey = myKeyPair.privateKey
-        publicKey = myKeyPair.publicKey; // Store the publicKey in the variable
-
-        console.log("Public Key: ", publicKey);
-        console.log("Private Key: ", myKeyPair.privateKey);
-        localStorage.setItem("privateKey", privateKey)
-        resolve(publicKey); // Resolve with the publicKey
-      })
-      .catch(error => {
-        console.error("Error generating key pair:", error);
-        reject(error); // Reject with the error
-      });
   });
-}
+});
 
 async function encrypt(message, publicKey) {
   let enc = new TextEncoder();
   let encoded = enc.encode(message);
 
-  let ciphertext = await window.crypto.subtle.encrypt(
-    {
-      name: "RSA-OAEP",
-    },
-    publicKey, // Use the publicKey passed as an argument
-    encoded
-  );
+let ciphertext = await window.crypto.subtle.encrypt(
+  {
+    name: "RSA-OAEP",
+  },
+  publicKey, // Use the publicKey passed as an argument
+  encoded
+);
 
-  // Convert the ciphertext ArrayBuffer to a base64 string
-  let ciphertextArray = new Uint8Array(ciphertext);
-  let ciphertextBase64 = btoa(String.fromCharCode(...ciphertextArray));
-  let ciphertext1 = ciphertextBase64 
+// Convert the ciphertext ArrayBuffer to a base64 string
+ ciphertextArray = new Uint8Array(ciphertext);
+let ciphertextBase64 = btoa(String.fromCharCode(...ciphertextArray));
+let ciphertext1 = ciphertextBase64 
 
-  console.log(message);
-  console.log(ciphertextBase64);
-  
+console.log(message);
+console.log(ciphertextBase64);
 
-  fetch('/sendmessage', {
-    method: 'POST',
-    body: JSON.stringify({"message":ciphertext1}),
-    headers: { 'Content-Type': 'application/json' }
-  }).catch(error => {
-    console.error("Error:", error);
-  });
+
+fetch('/sendmessage', {
+  method: 'POST',
+  body: JSON.stringify({"message":ciphertext1}),
+  headers: { 'Content-Type': 'application/json' }
+}).catch(error => {
+  console.error("Error:", error);
+});
 }
+   // encrypt(message.value, pubKey);
 
 
-async function decryptMessage(key, ciphertext) {
 
-  let decrypted = await window.crypto.subtle.decrypt(
-    {
-      name: "RSA-OAEP"
-    },
-    key,
-    ciphertext
-  );
-
-  let dec = new TextDecoder();
-  const decryptedValue = document.querySelector(".rsa-oaep .decrypted-value");
-  decryptedValue.classList.add('fade-in');
-  decryptedValue.addEventListener('animationend', () => {
-    decryptedValue.classList.remove('fade-in');
-  });
-  decryptedValue.textContent = dec.decode(decrypted);
-  console.log(decryptedValue.textContent)
-
-}
