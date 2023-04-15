@@ -103,9 +103,19 @@ class DB():
 
         
 
+    def set_message(self,message):
+        self.currentmessage = message
+     
+        return self.currentmessage
+
     def get_message(self):
+       
         return self.currentmessage
     
+    def set_key(self, key):
+        print("MY KEY HAS BEEN SET")
+        self.currentkey = key
+
     def get_key(self):
         return self.currentkey
 
@@ -113,4 +123,5 @@ class DB():
 # Our global database
 # Invoke this as needed
 database = DB()
+
 
