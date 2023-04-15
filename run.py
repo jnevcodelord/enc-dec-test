@@ -2,6 +2,7 @@
 from no_sql_db import DB, Table
 from bottle import Bottle, static_file,template,request
 encrypted_message = 'hi'
+DBase = DB()
 
 app = Bottle()
 
@@ -21,18 +22,49 @@ def index():
     return template('base.html')
 
 
-@app.route('/sendmessage', methods=['POST'])
+@app.route('/sendmessage', method=['POST'])
 def catchMessage(): 
-
     encrypted_message = request.json.get("message")
+    print(encrypted_message)
 
     if encrypted_message:
-        data = [encrypted_message]
-        DB.create_table_entry('messages', data)
+        print(encrypted_message)
+        data = encrypted_message
+        DBase.set_message(data)
         return 'Message received and processed successfully.'
     else:
         return 'Error: No message received.'
-    
+
+
+@app.route('/publickey', method=['POST'])
+def catchkey(): 
+    publickey = request.json.get("key")
+   
+    if publickey:
+        
+        DBase.set_key(publickey)
+        return 'Message received and processed successfully.'
+    else:
+        return 'Error: No message received.'
+
+
+@app.route('/checkmessages', method = 'GET')
+def checkMessage():
+     message = DBase.get_message()
+     return {'message':message}
+     
+@app.route('/checkmessages1', method = 'GET')
+def checkMessage():
+     message = DBase.get_message()
+     return {'message':message}
+
+@app.route('/checkKey', method = 'GET')
+def checkMessage():
+     pubkey = DBase.get_key()
+     return {'key':pubkey}
+
+
+
 
 
 
